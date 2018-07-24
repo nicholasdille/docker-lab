@@ -1,0 +1,46 @@
+pipelines:
+  build-docker-test:
+    group: Pipelines
+    environment_variables:
+      REGISTRY: registry:5000
+      REPOSITORY: superuser
+    label_template: "${COUNT}"
+    locking: off
+    materials:
+      mygit:
+        git: "http://superuser:superuser@gitea:3000/superuser/build-docker-test.git"
+        branch: master
+    stages:
+      - Build:
+          clean_workspace: true
+          jobs:
+            Build:
+              environment_variables:
+                IMAGE_NAME: test
+              tasks:
+               - exec:
+                   command: bash
+                   arguments:
+                    - -c
+                    - docker build --tag ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:${GO_PIPELINE_COUNTER} .
+               - exec:
+                   command: bash
+                   arguments:
+                    - -c
+                    - docker tag ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:${GO_PIPELINE_COUNTER} ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:dev
+               - exec:
+                   command: bash
+                   arguments:
+                    - -c
+                    - docker push ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:${GO_PIPELINE_COUNTER}
+               - exec:
+                   command: bash
+                   arguments:
+                    - -c
+                    - docker push ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:dev
+               - exec:
+                   run_if: any
+                   command: bash
+                   arguments:
+                    - -c
+                    - docker image ls -q | xargs -r docker rmi -f || true
