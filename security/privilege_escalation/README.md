@@ -1,7 +1,7 @@
 # Privilege Escalation
 
-XXX
+Access root-owned files:
 
 ```bash
-docker run -it --rm -v /etc:/hostetc ubuntu bash
+docker run -it --rm -v /:/host ubuntu bash
 ```
