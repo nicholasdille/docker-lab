@@ -1,9 +1,28 @@
-# Images and layers
+# Image Layers
 
-# Image Manifest
+Investigate layers:
 
 ```bash
-curl -sLH "Accept: application/vnd.docker.distribution.manifest.v2+json" http://localhost:5000/v2/groot/layer1/manifests/latest
+docker build --tag hello-world .
+docker history hello-world
+```
+
+## Preparation
+
+Upload image to local registry:
+
+```bash
+docker run -d -p 5000:5000 registry:2
+docker tag hello-world localhost:5000/hello-world
+docker push localhost:5000/hello-world
+```
+
+## Image Manifests
+
+Download image manifest:
+
+```bash
+curl -sLH "Accept: application/vnd.docker.distribution.manifest.v2+json" http://localhost:5000/v2/hello-world/manifests/latest
 ```
 
 Example output:
@@ -57,10 +76,12 @@ Example output:
 }
 ```
 
-# Image Configuration
+## Image Configuration
+
+Download image configuration:
 
 ```bash
-curl -sLH "Accept: application/vnd.docker.container.image.v1+json" http://localhost:5000/v2/groot/layer1/manifests/latest
+curl -sLH "Accept: application/vnd.docker.container.image.v1+json" http://localhost:5000/v2/hello-world/manifests/latest
 ```
 
 Example output:
@@ -68,7 +89,7 @@ Example output:
 ```json
 {
    "schemaVersion": 1,
-   "name": "groot/layer1",
+   "name": "hello-world",
    "tag": "latest",
    "architecture": "amd64",
    "fsLayers": [
@@ -148,38 +169,37 @@ Example output:
 }
 ```
 
-# Pulling a layer
+## Image Layers
 
-The SHA256 digest is contained in the image manifest `.layers[n].digest`.
+Download image layer
 
 ```bash
-curl -sLH "Accept: application/vnd.docker.image.rootfs.diff.tar.gzip" http://localhost:5000/v2/groot/layer1/blobs/sha256:8d2375955670826cb3c5daf7ba987365c0b2aef0055a73828f3d91392b0edd18
+curl -sLH "Accept: application/vnd.docker.image.rootfs.diff.tar.gzip" http://localhost:5000/v2/hello-world/blobs/sha256:8d2375955670826cb3c5daf7ba987365c0b2aef0055a73828f3d91392b0edd18
 ```
 
 Verifying a layer's digest:
 
 ```bash
-curl -LH "Accept: application/vnd.docker.image.rootfs.diff.tar.gzip" http://localhost:5000/v2/test/layer1/blobs/sha256:6b98dfc1607190243b0938e62c5ba2b7daedf2c56d7825dfb835208344705641 | sha256sum
+curl -LH "Accept: application/vnd.docker.image.rootfs.diff.tar.gzip" http://localhost:5000/v2/hello-world/blobs/sha256:6b98dfc1607190243b0938e62c5ba2b7daedf2c56d7825dfb835208344705641 | sha256sum
 ```
 
-# Pushing an image
-
-Mount layer from other repository:
+Determining the content length:
 
 ```bash
-curl -vX POST 'http://localhost:5000/v2/test2/target/blobs/uploads/?mount=sha256:dd6ea61144dbe1194ef5bb22f5d8eee64506a778a015716f4f4aeb2ca0aeb0c5&from=test2/layer2'
+curl -L http://localhost:5000/v2/hello-world/blobs/sha256:6b98dfc1607190243b0938e62c5ba2b7daedf2c56d7825dfb835208344705641 | wc -c
 ```
 
-Uploading data:
+## Tagging images remotely
 
 ```bash
-curl -vX POST http://localhost:5000/v2/test2/target/blobs/uploads/
+# Download manifest from old name
+MANIFEST=$(curl -u "${REGISTRY_USER}:${REGISTRY_PASS}" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "${REGISTRY_NAME}/v2/${REPOSITORY}/manifests/${TAG_OLD}")
+
+# Push manifest with new name
+curl -u "${REGISTRY_USER}:${REGISTRY_PASS}" -X PUT -H "Content-Type: application/vnd.docker.distribution.manifest.v2+json" -d "${MANIFEST}" "${REGISTRY_NAME}/v2/${REPOSITORY}/manifests/${TAG_NEW}"
 ```
 
-Extract `Docker-Upload-Uuid` from header.
+# Further reading
 
-Monolithic upload:
-
-```bash
-curl -vX PUT -T target-config.json -H "Content-Length: 2060" -H "Content-Type: application/octet-stream" http://localhost:5000/v2/test2/target/blobs/uploads/660374b6-073a-4f9c-b92b-cba07e844956?digest=sha256%3A58585a7fd7ed07a6f04166713d16cc780c1589a7bcee144d1dacadab22bd90e2
-```
+[Registry API](https://docs.docker.com/registry/spec/api/)
+[Image Manifest Specification v2.2](https://docs.docker.com/registry/spec/manifest-v2-2/)
