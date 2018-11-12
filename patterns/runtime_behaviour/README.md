@@ -1,5 +1,7 @@
 # Runtime Behaviour
 
-XXX Dockerfile
+`Dockerfile` is for building
 
-XXX ENTRYPOINT
+`CMD` and `ENTRYPOINT` define runtime behaviour
+
+Configuration using environment variables
