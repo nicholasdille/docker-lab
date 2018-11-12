@@ -1,3 +1,3 @@
 # Complexity
 
-XXX
+Note complexity of API.
