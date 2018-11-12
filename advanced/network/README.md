@@ -1,7 +1,5 @@
 # Network Management
 
-XXX slide: bridge, host, overlay, none and plugins
-
 How to publish a container port in the bridge network:
 
 ```bash
