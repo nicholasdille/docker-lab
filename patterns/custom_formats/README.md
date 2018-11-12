@@ -1,18 +1,15 @@
 # Custom Formats
 
-XXX
+Use a condensed output for containers:
 
-```
-docker ps --format "table {{.Names}}\\t{{.Image}}\\t{{.Status}}"
+```bash
+docker ps --format "table {{.Names}}\\t{{.Image}}\\t{{.Status}}\t{{.Ports}}"
 ```
 
-XXX
+Store the configuration in `~/.docker/config.json`:
 
-```
-cat ~/.docker/config.json
+```json
 {
-#...
-"psFormat":"table {{.Names}}\\t{{.Image}}\\t{{.Status}}"
-#...
+    "psFormat":"table {{.Names}}\\t{{.Image}}\\t{{.Status}}\t{{.Ports}}"
 }
 ```
