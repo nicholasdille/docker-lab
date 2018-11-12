@@ -1,6 +1,6 @@
 # Build versus Runtime Environment
 
-XXX
+Build tools are a security issue:
 
 ```bash
 docker build --tag jre:8u181 .
