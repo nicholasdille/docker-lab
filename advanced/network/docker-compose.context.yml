@@ -1,0 +1,6 @@
+version: "2"
+
+services:
+  web:
+		image: nginx
+		container_name: web1
