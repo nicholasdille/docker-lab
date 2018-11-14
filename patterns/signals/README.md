@@ -44,7 +44,7 @@ RUN apt update \
 
 ADD nginx.conf /etc/supervisor/conf.d/
 
-ENTRYPOINT supervisord
+ENTRYPOINT [ "supervisord" ]
 ```
 
 nginx.conf
