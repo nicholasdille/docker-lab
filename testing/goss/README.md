@@ -26,6 +26,8 @@ Validate container (again... `dgoss` instead of `docker`):
 dgoss run nginx
 ```
 
+Advantage: No change to image!
+
 ## Bake goss in
 
 Run goss container to create it:
@@ -47,6 +49,19 @@ docker exec weby /goss/goss autoadd nginx
 docker cp weby:/goss.yaml .
 ```
 
-## Using the goss base image
+## Health endpoint
 
-XXX
+Build image and start container:
+
+```bash
+docker build --tag nginx-goss .
+docker run -d --name nginx nginx-goss
+docker exec nginx supervisorctl status
+```
+
+Get validation results:
+
+```bash
+CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' nginx)
+curl http://${CONTAINER_IP}:8080/healthz
+```
