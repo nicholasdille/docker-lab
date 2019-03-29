@@ -1,0 +1,44 @@
+version: '2'
+
+vars:
+  VOLUME_NAME: go-task
+
+tasks:
+
+  build:
+    desc: Build a Docker image based on the variables "tag", "file" and "context"
+    cmds:
+      - docker build --tag {{.tag}} --file {{.file}} {{.context}}
+
+  build_dind:
+    desc: Build a Docker image inside a container
+    cmds:
+      - docker run --rm --volume {{.VOLUME_NAME}}:/work --volume /var/run/docker.sock:/var/run/docker.sock --privileged --workdir /work/{{.dir}} docker:stable-dind docker build --tag {{.tag}} --file {{.file}} {{.context}}
+
+  push:
+    desc: Push an image based on the variable "tag"
+    cmds:
+      - docker push {{.tag}}
+
+  volume:
+    desc: Create a Docker volume used as workspace
+    silent: true
+    cmds:
+      - docker volume ls | grep local | grep --quiet {{.VOLUME_NAME}} || docker volume create {{.VOLUME_NAME}}
+
+  clone:
+    desc: Clone a git repository into the workspace
+    deps: [volume]
+    cmds:
+      - docker run --rm --volume {{.VOLUME_NAME}}:/work --workdir /work --entrypoint sh alpine/git -c 'test -d .git || git clone {{.url}} .'
+
+  run:
+    desc: Run command in a container using the workspace
+    deps: [volume]
+    cmds:
+      - docker run --rm --volume {{.VOLUME_NAME}}:/work --workdir /work/{{.dir}} {{.image}} {{.command}}
+
+  clean:
+    desc: Clean build environment
+    cmds:
+      - docker volume remove {{.VOLUME_NAME}}

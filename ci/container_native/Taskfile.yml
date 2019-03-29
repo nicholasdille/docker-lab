@@ -2,52 +2,37 @@ version: '2'
 
 output: prefixed
 
-vars:
-  VOLUME_NAME: go-task
-  image: alpine
-  command: pwd && ls -al
+includes:
+  docker: ./Docker.yml
 
 tasks:
 
-  docker/build:
-    desc: Build a Docker image based on the variables "tag", "file" and "context"
-    cmds:
-      - docker build --tag {{.tag}} --file {{.file}} {{.context}}
-
-  docker/push:
-    desc: Push an image based on the variable "tag"
-    cmds:
-      - docker push {{.tag}}
-
-  docker/volume:
-    desc: Create a Docker volume used as workspace
-    cmds:
-      - docker volume ls | grep local | grep --quiet {{.VOLUME_NAME}} || docker volume create {{.VOLUME_NAME}}
-
-  docker/clone:
-    desc: Clone a git repository into the workspace
-    deps: [docker/volume]
-    cmds:
-      - docker run --rm --volume go-task:/work --workdir /work --entrypoint sh alpine/git -c 'test -d .git || git clone {{.url}} .'
-
-  docker/run:
-    desc: Run command in a container using the workspace
-    deps: [docker/volume]
-    cmds:
-      - docker run --rm --volume {{.VOLUME_NAME}}:/work --workdir /work {{.image}} {{.command}}
-
-  docker/clean:
-    desc: Clean build environment
-    cmds:
-      - docker volume remove {{.VOLUME_NAME}}
-
   build:
     cmds:
-      - task: docker/clone
+
+      - task: docker:clone
         vars:
-          url: https://github.com/nicholasdille/docker-ci-cd-demo
-      - task: docker/run
+          url: https://github.com/nicholasdille/cicd-lab
+
+      - task: docker:run
         vars:
           image: alpine
-          command: pwd
-      #- task: docker/clean
+          dir: 01_introduction
+          command: cp ../java-hello-world/HelloWorld.java .
+
+      - task: docker:run
+        vars:
+          image: openjdk:jdk
+          dir: 01_introduction
+          command: javac HelloWorld.java
+
+      - task: docker:build_dind
+        vars:
+          dir: 01_introduction
+          file: Dockerfile
+          context: .
+          tag: test:latest
+
+  clean:
+    cmds:
+      - task: docker:clean
